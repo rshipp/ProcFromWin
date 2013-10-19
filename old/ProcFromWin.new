@@ -1,0 +1,307 @@
+; <COMPILER: v1.0.48.5>
+
+
+
+
+
+
+
+
+
+KillAllSleepTime := 100
+MainGuiColor := c3c3c3
+MainGuiTrans := 225
+
+
+
+PFWVerString = ProcFromWin 0.9 beta
+
+
+
+DetectHiddenText, On
+DetectHiddenWindows, On
+
+
+
+
+
+
+
+MainGuiCreate:
+Gui, Font, q5 s9 c000000, Segoe UI
+Gui, Color, %MainGuiColor%
+Gui, Font, s8
+Gui, Add, Text,, Hold cursor over window and press `n spacebar to grab info.
+
+MainGuiShow:
+Gui, Show, Hide, %PFWVerString%
+Gui +ToolWindow -Caption +AlwaysOnTop +LastFound
+Gui, Show, x0 y0, %PFWVerString%
+WinSet, Transparent, %MainGuiTrans%, %PFWVerString%
+
+
+Menu, Tray, NoStandard
+Menu, Tray, Add, &Help, HelpGui
+Menu, Tray, Add, &About, AboutGui
+Menu, Tray, Add, &Exit, EndIt
+Menu, Tray, Tip, %PFWVerString%
+Return
+
+GuiClose:
+OnExit:
+Gui, Destroy
+ExitApp
+Return
+
+
+
+
+GetWinInfo:
+Space::
+Win := GetWinofInterest()
+ProcPID := GetProcPid()
+ProcFullPath := GetProcPath(ProcPID)
+ProcName := GetJustProc()
+WinGetTitle, WinTitle, ahk_id %Win%
+If WinTitle =
+  WinTitle = None
+WinGetText, WinText, ahk_id %Win%
+WinGetPos, XPos, YPos, WinWidth, WinHeight, ahk_id %Win%
+
+CreateInfoWin:
+IfWinExist, Window Information
+	Gui, 2:Destroy
+WinActivate, %PFWVerString%
+Gui, 2:+owner1
+Gui, 2:Add, Text,, Process: %ProcName%`nPID: %ProcPid%`nProcess location: %ProcFullPath%
+Gui, 2:Add, Text, gKillItName Center, Kill all instances of process
+Gui, 2:Add, Text, gKillItPid Center, Kill only this specific process. (Using PID)
+Gui, 2:Add, Text, gDelIt Center, Try to delete exe.
+Gui, 2:Add, Text, gMoreInfoGui Center, More information
+Gui, 2:Show, h200, Window Information
+Return
+
+2GuiClose:
+Gui, 2:Destroy
+WinActivate, %PFWVerString%
+Return
+
+
+KillItName:
+ProcessCloseAll(ProcName)
+If Not ErrorLevel
+	Gui, 2:Add, Text,, Process appears to have been killed successfully.
+ProcState := ProcessExist(ProcName)
+Gui, 2:+Resize
+Return
+
+KillItPid:
+ProcessCloseAll(ProcPID)
+If Not ErrorLevel
+	Gui, 2:Add, Text,, Process appears to have been killed successfully.
+ProcState := ProcessExist(ProcPID)
+Gui, 2:+Resize
+Return
+
+DelIt:
+Process, close, %ProcName%
+IfNotExist, %ProcFullPath%
+	Gui, 2:Add, Text,, That file does not appear to exist.
+IfExist, %ProcFullPath%
+{
+	FileDelete, %ProcFullPath%
+	IfNotExist, %ProcFullPath%
+		Gui, 2:Add, Text,, File successfully deleted.
+}
+
+Return
+
+
+
+AboutGui:
+Gui, 3:+owner1
+Gui, 3:Color, dddddd
+Gui, 3:Font, c000055 s9 q5, Segoe UI
+Gui, 3:Add, Text, gPFWHome, %PFWVerString%
+Gui, 3:Add, Text, gMEHome, Created by GSteph42.
+Gui, 3:Add, Text, gAHKHome, Made possible by AHK.
+Gui, 3:Show,, About %PFWVerString%
+Return
+
+PFWHome:
+
+Return
+
+MEHome:
+
+Return
+
+AHKHome:
+Run, www.autohotkey.com
+Return
+
+3GuiClose:
+Gui, 3:Destroy
+WinActivate, %PFWVerString%
+Return
+
+
+
+HelpGui:
+Gui, 4:+owner1
+Gui, 4:Font, s9 q5, Segue UI
+Gui, 4:Add, Text, Center, To use ProcFromWin, simply point your cursor over the `nwindow you want to analyze`, and hit the spacebar.`nThis should show you a window with information`nabout the window you selected`, and the options to `nkill and/or delete the exe running the window, `nor show more information about it.`n`nProcFromWin was designed after I ran into a `nscareware/fakeav that was using a script host to run `nitself`, and had a little trouble figuring out what `nexe/process the malware was using. I couldn't `nstop thinking about how much easier it `nwould have been if I had had a tool like this.`nNow I do. I hope someone else can put`nit to use for a similar purpose.`n`n
+Gui, 4:Show,, ProcFromWin Help
+Return
+
+4GuiClose:
+Gui, 4:Destroy
+WinActivate, %PFWVerString%
+Return
+
+
+
+MoreInfoGui:
+Gui, 5:+owner2
+Gui, 5:Add, Picture,, %ProcFullPath%
+Gui, 5:Add, Text, , Copyable executable location:
+Gui, 5:Add, Edit, , %ProcFullPath%
+Gui, 5:Add, Text, , `nWindow title: %WinTitle%
+Gui, 5:Add, Text, , `nWindow text (if any):
+Gui, 5:Add, Edit, , %WinText%
+Gui, 5:Add, Text, , `nWindow size and position: XPos = %XPos%`, YPos = %YPos%`, Width = %WinWidth%`, Height = %WinHeight%
+Gui, 5:Add, Text, gMakeFakeWin, `nEmulate window
+Gui, 5:Add, Text, ,
+Gui, 5:Show,, More Information
+Gui, 5:+Resize
+Return
+
+5GuiClose:
+Gui, 5:Destroy
+WinActivate, %PFWVerString%
+Return
+
+
+
+MakeFakeWin:
+Gui, 6:Destroy
+Gui, 6:+owner5
+Gui, 6:Add, Text,, %WinText%
+Gui, 6:Show, W%WinWidth% H%WinHeight% X%XPos% Y%YPos%, %WinTitle%
+WinMove, A,, %XPos%, %YPos%, %WinWidth%, %WinHeight%
+WinSet, Transparent, 200, A
+Return
+
+6GuiClose:
+Gui, 6:Destroy
+WinActivate, %PFWVerString%
+Return
+
+6GuiMinimize:
+Gui, 6:Destroy
+WinActivate, %PFWVerString%
+Return
+
+
+
+EndIt:
+Gui, 5:Destroy
+Gui, 4:Destroy
+Gui, 3:Destroy
+Gui, 2:Destroy
+Gui, 1:Destroy
+ExitApp
+Return
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+GetWinofInterest()
+{
+	MouseGetPos,,, Win
+	Return, Win
+}
+Return
+
+
+GetWinId()
+{
+	global Win
+	WinGet, WinID, ID, ahk_id %Win%
+	Return, WinID
+}
+Return
+
+
+GetProcPath(p_pid)
+{
+	h_process := DllCall( "OpenProcess", "uint", 0x10|0x400, "int", false, "uint", p_pid )
+	If (ErrorLevel or h_process = 0)
+		Return, "Error retrieving information!"
+	name_size = 255
+	VarSetCapacity( ProcFullPath, name_size )
+	result := DllCall( "psapi.dll\GetModuleFileNameExA", "uint", h_process, "uint", 0, "str", ProcFullPath, "uint", name_size )
+	DllCall( "CloseHandle", h_process )
+	Return, ProcFullPath
+}
+Return
+
+
+GetJustProc()
+{
+	global Win
+	WinGet, ProcName, ProcessName, ahk_id %Win%
+	Return, ProcName
+}
+Return
+
+
+GetProcPID()
+{
+	global Win
+	WinGet, ProcPID, PID, ahk_id %Win%
+	Return, ProcPID
+}
+Return
+
+
+ProcessExist(exeName)
+{
+	Process, Exist, %exeName%
+	return !!ERRORLEVEL
+}
+
+
+ProcessClose(exeName)
+{
+	Process, Close, %exeName%
+}
+
+
+ProcessCloseAll(exeName)
+{
+	while ProcessExist(exeName)
+	{
+		ProcessClose(exeName)
+		Sleep, %KillAllSleepTime%
+	}
+}
+
+

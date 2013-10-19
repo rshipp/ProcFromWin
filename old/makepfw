@@ -1,0 +1,3 @@
+#!/bin/bash
+killall $1.exe
+wine "Z:\media\Windows Partition\Program Files\AutoHotkey\Compiler\Ahk2exe.exe" /in $1
